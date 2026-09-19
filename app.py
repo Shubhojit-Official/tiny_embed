@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 def one_hot(word_id, V):
     vector = np.zeros(V)
@@ -99,6 +101,50 @@ def most_similar(word, top_n=5):
 
     return similarities[:top_n]
 
+def plot():
+    words_to_plot = [
+        "cat",
+        "dog",
+        "mouse",
+        "boy",
+        "girl",
+        "food",
+        "milk",
+        "cheese",
+        "mat",
+        "sat",
+        "likes",
+        "chased"
+    ]
+
+    vectors = np.array([
+        W_in[word_to_id[word]]
+        for word in words_to_plot
+    ])
+
+    pca = PCA(n_components=2)
+
+    points = pca.fit_transform(vectors)
+
+    plt.figure(figsize=(10, 7))
+
+    plt.scatter(
+        points[:, 0],
+        points[:, 1]
+    )
+
+    for i, word in enumerate(words_to_plot):
+
+        plt.annotate(
+            word,
+            (points[i, 0], points[i, 1])
+        )
+
+    plt.title("Learned Word Embeddings")
+    plt.xlabel("PC1")
+    plt.ylabel("PC2")
+
+    plt.show()
 
 if __name__ == "__main__":
     text = """
@@ -180,6 +226,8 @@ if __name__ == "__main__":
     for word in ["cat", "dog", "mouse", "boy", "girl", "food"]:
         print("\n", word)
         print(most_similar(word))
+
+    plot()
 
   
     
