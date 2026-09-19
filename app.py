@@ -63,14 +63,67 @@ def train_step(input_id, target_id, W_in, W_out, learning_rate):
 
     return loss
 
+def cosine_similarity(a, b):
+
+    return np.dot(a, b) / (
+        np.linalg.norm(a) *
+        np.linalg.norm(b)
+    )
+
+def most_similar(word, top_n=5):
+
+    word_vector = W_in[word_to_id[word]]
+
+    similarities = []
+
+    for other_word in vocab:
+
+        if other_word == word:
+            continue
+
+        other_vector = W_in[word_to_id[other_word]]
+
+        similarity = cosine_similarity(
+            word_vector,
+            other_vector
+        )
+
+        similarities.append(
+            (other_word, similarity)
+        )
+
+    similarities.sort(
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    return similarities[:top_n]
+
 
 if __name__ == "__main__":
-    text = "the cat sat on the mat"
+    text = """
+    the cat sat on the mat
+    the cat ate the food
+    the cat likes the milk
+    the dog sat on the mat
+    the dog ate the food
+    the dog likes the milk
+    the dog chased the cat
+    the cat chased the mouse
+    the mouse ate the food
+    the mouse likes the cheese
+    the boy likes the dog
+    the boy chased the cat
+    the girl likes the cat
+    the girl likes the dog
+    """
     words  = text.split()
 
     vocab = sorted(set(words))
     vocab_size = len(vocab)
-    embedding_dim = 3
+    embedding_dim = 10
+
+    print("Vocabulary size:", vocab_size)
 
     word_to_id = {
         word: i for i,word in enumerate(vocab)
@@ -88,9 +141,12 @@ if __name__ == "__main__":
     W_in = np.random.randn(vocab_size, embedding_dim) * 0.01
     W_out = np.random.randn(embedding_dim, vocab_size) * 0.01
 
-    X, y = create_training_data(corpus,1)
+    X, y = create_training_data(corpus = corpus, window_size= 2)
 
-    epochs = 100
+    print("Training examples:", len(X))
+    print("------Training Phase-------")
+
+    epochs = 500
     for epoch in range(epochs):
         total_loss = 0
         for input_id, target_id in zip(X, y):
@@ -99,7 +155,7 @@ if __name__ == "__main__":
                 target_id,
                 W_in,
                 W_out,
-                learning_rate=0.1
+                learning_rate=0.05
             )
             total_loss += loss
 
@@ -110,6 +166,9 @@ if __name__ == "__main__":
             f"Loss: {average_loss:.4f}"
             )
 
+    print("------Training Stop-------")
+
+    print ("Updated Embedding Vectors: ")
     for word in vocab:
         word_id = word_to_id[word]
 
@@ -117,6 +176,10 @@ if __name__ == "__main__":
             word,
             W_in[word_id]
         )
+
+    for word in ["cat", "dog", "mouse", "boy", "girl", "food"]:
+        print("\n", word)
+        print(most_similar(word))
 
   
     
