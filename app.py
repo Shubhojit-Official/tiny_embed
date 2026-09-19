@@ -26,12 +26,17 @@ def create_training_data(corpus, window_size = 1):
             Y.append(corpus[j])
     return np.array(X), np.array(Y)
 
+def softmax(z):
+    exp_z = np.exp(z - np.max(z))
+    return exp_z / np.sum(exp_z)
+
 if __name__ == "__main__":
     text = "the cat sat on the mat"
     words  = text.split()
 
     vocab = sorted(set(words))
     vocab_size = len(vocab)
+    embedding_dim = 3
 
     word_to_id = {
         word: i for i,word in enumerate(vocab)
@@ -43,15 +48,38 @@ if __name__ == "__main__":
 
     corpus = [word_to_id[word] for word in words]
 
-    embed_mat = embedding(vocab_size, 3)
-
     X, y = create_training_data(corpus, window_size=1)
 
-    for input_id, target_id in zip(X, y):
-        print(
-            id_to_word[input_id],
-            "->",
-            id_to_word[target_id]
-        )
+    embed_mat = embedding(vocab_size, embedding_dim)
 
+    W_in = embed_mat * 0.01 # Input Embedding Matrix
+    W_out = np.random.randn(embedding_dim, vocab_size) * 0.01
+
+
+    input_id = word_to_id['cat']
+    target_id = word_to_id['sat']
+
+    # Get Embedding for the input
+    h = W_in[input_id]
+
+    # Calculate Logits
+    z = h @ W_out
+
+    # Softmax
+    p = softmax(z)
+
+    # Loss function (Cross-Entropy)
+    loss = -np.log(p[target_id])
+
+    # Gradient of loss wrt logits
+    dz = p.copy()
+    dz[target_id] -= 1
+
+    # Gradient for output matrix (dL/dW_out = h(transpose)*(p-y))
+    dW_out =  np.outer(h,dz)
+
+    # Gradient for embedding
+    dh = dz @ W_out.T
+    
+  
     
